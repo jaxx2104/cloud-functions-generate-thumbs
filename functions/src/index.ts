@@ -1,4 +1,7 @@
 import * as fs from "fs"
+import * as path from 'path';
+import * as os from 'os';
+
 import * as admin from "firebase-admin"
 import * as functions from "firebase-functions"
 import fetch from "node-fetch"
@@ -19,7 +22,7 @@ export const fetchImage = functions.https.onRequest(async (req, res) => {
     const result = await fetch(query)
     const buffer = await result.buffer()
     const filename = md5(query)
-    const filepath = `./assets/${filename}`
+    const filepath = path.join(os.tmpdir(), filename);
 
     if (!result.ok) return
 
