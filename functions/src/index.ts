@@ -1,18 +1,32 @@
+import * as fs from "fs"
+import * as admin from "firebase-admin"
 import * as functions from "firebase-functions"
 import fetch from "node-fetch"
-import * as fs from "fs"
+
+// import * as storage from "./storage";
+import { md5 } from "./md5"
+
+admin.initializeApp()
+const bucket = admin.storage().bucket()
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
 
+// fetchImage?q=https://jp.vuejs.org/images/logo.png
 export const fetchImage = functions.https.onRequest(async (req, res) => {
-  // fetchImage?q=https://jp.vuejs.org/images/logo.png
-  const query = req.query.q
-  const result = await fetch(query)
-  const buffer = await result.buffer()
-  if (result.status === 200) {
-    fs.writeFileSync("logo.png", buffer, "binary")
+  const query: string = req.query.q || ""
+  try {
+    const result = await fetch(query)
+    const buffer = await result.buffer()
+    const filename = md5(query)
+    const filepath = `./assets/${filename}`
+
+    if (!result.ok) return
+
+    fs.writeFileSync(filepath, buffer, "binary")
+    await bucket.upload(filepath)
+  } catch (error) {
+    console.error(error)
   }
-  console.log(result.status)
-  res.send("Hello from Firebase!")
+  res.send("fetchImage!")
 })
